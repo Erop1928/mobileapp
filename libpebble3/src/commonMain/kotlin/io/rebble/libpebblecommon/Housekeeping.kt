@@ -35,8 +35,9 @@ class Housekeeping(
         val deleteHealthDataOlderThan = clock.now() - 90.days
         val deletedHealthRecords = healthDao.deleteExpiredHealthData(deleteHealthDataOlderThan.epochSeconds)
         val deletedOverlayRecords = healthDao.deleteExpiredOverlayData(deleteHealthDataOlderThan.epochSeconds)
-        if (deletedHealthRecords > 0 || deletedOverlayRecords > 0) {
-            println("Housekeeping: Deleted $deletedHealthRecords health records and $deletedOverlayRecords overlay records older than 90 days")
+        val deletedHrSamples = healthDao.deleteExpiredHeartRateSamples(deleteHealthDataOlderThan.epochSeconds)
+        if (deletedHealthRecords > 0 || deletedOverlayRecords > 0 || deletedHrSamples > 0) {
+            println("Housekeeping: Deleted $deletedHealthRecords health records, $deletedOverlayRecords overlay records and $deletedHrSamples heart rate samples older than 90 days")
         }
     }
 }

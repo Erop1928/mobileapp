@@ -62,6 +62,12 @@ internal val ScrubLineColor = Color.White.copy(alpha = 0.7f)
 internal val AxisLabelColor = Color.White.copy(alpha = 0.5f)
 internal val CardShape = RoundedCornerShape(4.dp)
 
+internal fun workoutColor(type: OverlayType): Color = when (type) {
+    OverlayType.Walk -> Color(0xFF4CAF50)
+    OverlayType.Run -> Color(0xFFFF9800)
+    else -> Color(0xFF2196F3)
+}
+
 internal class ScrubState { var scrubIndex by mutableStateOf<Int?>(null) }
 
 @Composable
@@ -122,7 +128,7 @@ internal fun AreaChart(
 
         // Session markers
         for (s in sessions) {
-            val c = when (s.type) { OverlayType.Walk -> Color(0xFF4CAF50); OverlayType.Run -> Color(0xFFFF9800); else -> Color(0xFF2196F3) }
+            val c = workoutColor(s.type)
             val sx = s.startIndex * stepX; val ew = ((s.endIndex - s.startIndex + 1) * stepX).coerceAtLeast(stepX)
             drawRect(c, Offset(sx, cH + 1.dp.toPx()), Size(ew, sH))
         }

@@ -27,6 +27,7 @@ import io.rebble.libpebblecommon.database.entity.ChannelGroup
 import io.rebble.libpebblecommon.database.entity.ChannelItem
 import io.rebble.libpebblecommon.database.entity.HRMonitoringInterval
 import io.rebble.libpebblecommon.database.entity.HealthDataEntity
+import io.rebble.libpebblecommon.database.entity.HeartRateSampleEntity
 import io.rebble.libpebblecommon.database.entity.HealthGender
 import io.rebble.libpebblecommon.database.entity.MuteState
 import io.rebble.libpebblecommon.database.entity.NotificationAppItem
@@ -546,6 +547,7 @@ class FakeLibPebble : LibPebble {
     override suspend fun getRestingHeartRate(dayStartEpochSec: Long): Int? = null
     override suspend fun getHRZoneMinutes(start: Long, end: Long) = emptyMap<Int, Long>()
     override suspend fun getActivitySessions(start: Long, end: Long) = emptyList<OverlayDataEntity>()
+    override suspend fun getHeartRateSamples(start: Long, end: Long) = emptyList<HeartRateSampleEntity>()
     override suspend fun getTypicalSteps(dayOfWeek: Int) = emptyList<Long>()
     override suspend fun getTypicalSleepSeconds() = 0L
     override suspend fun populateDebugHealthData() {}

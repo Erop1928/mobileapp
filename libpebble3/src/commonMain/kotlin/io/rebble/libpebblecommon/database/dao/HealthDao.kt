@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import io.rebble.libpebblecommon.database.entity.HealthDataEntity
+import io.rebble.libpebblecommon.database.entity.HeartRateSampleEntity
 import io.rebble.libpebblecommon.database.entity.OverlayDataEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -15,6 +16,12 @@ interface HealthDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertOverlayData(data: List<OverlayDataEntity>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertHeartRateSamples(data: List<HeartRateSampleEntity>)
+
+    @Query("SELECT * FROM heart_rate_samples WHERE timestamp >= :start AND timestamp < :end ORDER BY timestamp ASC")
+    suspend fun getHeartRateSamples(start: Long, end: Long): List<HeartRateSampleEntity>
 
     @Query("SELECT * FROM health_data WHERE timestamp >= :start AND timestamp <= :end ORDER BY timestamp ASC")
     fun getHealthData(start: Long, end: Long): Flow<List<HealthDataEntity>>
@@ -138,6 +145,9 @@ interface HealthDao {
 
     @Query("DELETE FROM overlay_data WHERE startTime < :expirationTimestamp")
     suspend fun deleteExpiredOverlayData(expirationTimestamp: Long): Int
+
+    @Query("DELETE FROM heart_rate_samples WHERE timestamp < :expirationTimestamp")
+    suspend fun deleteExpiredHeartRateSamples(expirationTimestamp: Long): Int
 }
 
 data class HealthAggregates(

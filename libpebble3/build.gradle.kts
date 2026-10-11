@@ -106,6 +106,7 @@ kotlin {
         commonMain.dependencies {
             api(libs.coroutines)
             implementation(libs.serialization)
+            implementation(libs.serialization.protobuf)
             implementation(libs.kermit)
             implementation(libs.room.runtime)
             api(libs.room.paging)

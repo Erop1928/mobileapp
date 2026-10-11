@@ -8,6 +8,7 @@ import io.rebble.libpebblecommon.connection.LatestHeartRate
 import io.rebble.libpebblecommon.connection.WatchManager
 import io.rebble.libpebblecommon.database.dao.HealthDao
 import io.rebble.libpebblecommon.database.entity.HealthDataEntity
+import io.rebble.libpebblecommon.database.entity.HeartRateSampleEntity
 import io.rebble.libpebblecommon.database.entity.HRMonitoringInterval
 import io.rebble.libpebblecommon.database.entity.HealthGender
 import io.rebble.libpebblecommon.database.entity.HealthSettingsEntryDao
@@ -239,6 +240,9 @@ class Health(
             OverlayType.Walk.value, OverlayType.Run.value, OverlayType.OpenWorkout.value
         ))
 
+    override suspend fun getHeartRateSamples(start: Long, end: Long): List<HeartRateSampleEntity> =
+        healthDao.getHeartRateSamples(start, end)
+
     override suspend fun getTypicalSteps(dayOfWeek: Int): List<Long> {
         val timeZone = TimeZone.currentSystemDefault()
         val today = System.now().toLocalDateTime(timeZone).date
@@ -285,6 +289,7 @@ class Health(
     override suspend fun populateDebugHealthData() {
         healthDao.deleteExpiredHealthData(Long.MAX_VALUE)
         healthDao.deleteExpiredOverlayData(Long.MAX_VALUE)
+        healthDao.deleteExpiredHeartRateSamples(Long.MAX_VALUE)
 
         val timeZone = TimeZone.currentSystemDefault()
         val today = System.now().toLocalDateTime(timeZone).date
@@ -428,6 +433,15 @@ class Health(
                     distanceCm = (sessionDur / 60 * random.nextInt(50, 150)).toInt(),
                     offsetUTC = 0,
                 ))
+                val plateauBpm = if (sessionType == OverlayType.Run) 155 else 120
+                healthDao.insertHeartRateSamples((0 until sessionDur).map { s ->
+                    val warmUp = (s / 300.0).coerceAtMost(1.0)
+                    HeartRateSampleEntity(
+                        timestamp = sessionStart + s,
+                        bpm = (85 + (plateauBpm - 85) * warmUp).toInt() + random.nextInt(-4, 5),
+                        quality = 6,
+                    )
+                })
             }
 
             healthDao.insertOverlayData(overlays)

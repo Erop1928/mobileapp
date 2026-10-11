@@ -58,6 +58,8 @@ import coredevices.pebble.ui.HealthViewModel
 import coredevices.pebble.ui.WatchHomeViewModel
 import coredevices.pebble.ui.WatchOnboardingFinished
 import coredevices.pebble.ui.WatchSettingsScreenViewModel
+import coredevices.pebble.ui.WorkoutDetailViewModel
+import coredevices.pebble.ui.WorkoutsViewModel
 import coredevices.pebble.weather.OpenWeather25Interceptor
 import coredevices.pebble.weather.WeatherFetcher
 import coredevices.pebble.config.ConfigPageSessions
@@ -283,6 +285,8 @@ val watchModule = module {
     }
     viewModelOf(::ModelManagementScreenViewModel)
     viewModelOf(::HealthViewModel)
+    viewModelOf(::WorkoutsViewModel)
+    viewModel { p -> WorkoutDetailViewModel(get(), p.get(), p.get()) }
 
     single { SearchClient(appId = "7683OW76EQ", apiKey = "252f4938082b8693a8a9fc0157d1d24f") }
 }

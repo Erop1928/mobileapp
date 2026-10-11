@@ -7,6 +7,7 @@ import io.rebble.libpebblecommon.database.dao.insertHealthDataWithPriority
 import io.rebble.libpebblecommon.database.dao.insertOverlayDataWithDeduplication
 import io.rebble.libpebblecommon.database.entity.HealthStatDao
 import io.rebble.libpebblecommon.di.LibPebbleCoroutineScope
+import io.rebble.libpebblecommon.health.parsers.parseHeartRateLogData
 import io.rebble.libpebblecommon.health.parsers.parseOverlayData
 import io.rebble.libpebblecommon.health.parsers.parseStepsData
 import io.rebble.libpebblecommon.services.updateHealthStatsInDatabase
@@ -174,11 +175,7 @@ class HealthDataProcessor(
                 logger.d { "Received sleep tag data, processing as overlay" }
                 processOverlayData(payload, session.itemSize)
             }
-            HEALTH_HR_TAG -> {
-                // Heart rate data is embedded in steps data for newer firmware
-                logger.d { "Received standalone HR data (tag 85), currently handled in steps data" }
-                null
-            }
+            HEALTH_HR_TAG -> processHeartRateLogData(payload, session.itemSize)
             else -> {
                 logger.w { "Unknown health data tag: ${session.tag}" }
                 null
@@ -218,6 +215,15 @@ class HealthDataProcessor(
         logger.d { "HEALTH_DATA: Health update event emitted successfully" }
 
         return "${records.size} records (${totalSteps} steps)"
+    }
+
+    private suspend fun processHeartRateLogData(payload: ByteArray, itemSize: UShort): String? {
+        val samples = parseHeartRateLogData(payload, itemSize)
+        if (samples.isEmpty()) return null
+
+        healthDao.insertHeartRateSamples(samples)
+        _healthDataUpdated.emit(Unit)
+        return "${samples.size} heart rate samples"
     }
 
     private suspend fun processOverlayData(payload: ByteArray, itemSize: UShort): String? {

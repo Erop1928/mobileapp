@@ -30,6 +30,7 @@ import io.rebble.libpebblecommon.database.dao.VibePatternDao
 import io.rebble.libpebblecommon.database.dao.WatchPreference
 import io.rebble.libpebblecommon.database.entity.CalendarEntity
 import io.rebble.libpebblecommon.database.entity.HealthDataEntity
+import io.rebble.libpebblecommon.database.entity.HeartRateSampleEntity
 import io.rebble.libpebblecommon.database.entity.MuteState
 import io.rebble.libpebblecommon.database.entity.NotificationEntity
 import io.rebble.libpebblecommon.database.entity.NotificationRuleEntity
@@ -200,6 +201,9 @@ interface HealthDataApi {
 
     /** Returns activity overlay entries (Walk, Run, OpenWorkout types) in the range. */
     suspend fun getActivitySessions(start: Long, end: Long): List<OverlayDataEntity>
+
+    /** Returns individual heart rate readings in the range (~1 per second during workouts). */
+    suspend fun getHeartRateSamples(start: Long, end: Long): List<HeartRateSampleEntity>
 
     /** Returns hourly typical (historical average) step counts for the given weekday.
      *  @param dayOfWeek kotlinx.datetime.DayOfWeek ordinal (0=Monday, 6=Sunday) */

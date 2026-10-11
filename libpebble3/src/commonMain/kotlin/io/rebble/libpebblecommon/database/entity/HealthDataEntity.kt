@@ -34,3 +34,12 @@ data class OverlayDataEntity(
     val distanceCm: Int,
     val offsetUTC: Int
 )
+
+/** Individual heart rate readings; ~1 per second while a workout is running. */
+@Entity(tableName = "heart_rate_samples")
+data class HeartRateSampleEntity(
+    @PrimaryKey
+    val timestamp: Long,
+    val bpm: Int,
+    val quality: Int,
+)

@@ -4,6 +4,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,6 +17,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.DirectionsRun
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Settings
@@ -71,6 +73,7 @@ fun HealthScreen(topBarParams: TopBarParams, nav: NavBarNav) {
             verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             ActivityCard(act, vm.selectedTimeRange, imperial)
+            WorkoutsRow { nav.navigateTo(PebbleNavBarRoutes.WorkoutsRoute) }
             SleepCard(slp, vm.selectedTimeRange)
             if (hasHrmWatch) HeartRateCard(hr, vm.selectedTimeRange)
             TextButton(
@@ -116,12 +119,12 @@ private fun DateNavigator(label: String, offset: Int, onBack: () -> Unit, onFwd:
 }
 
 @Composable
-private fun HealthCard(bg: Color, content: @Composable () -> Unit) {
-    Surface(shape = CardShape, color = bg, shadowElevation = 2.dp) { Column { content() } }
+internal fun HealthCard(bg: Color, modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    Surface(modifier = modifier, shape = CardShape, color = bg, shadowElevation = 2.dp) { Column { content() } }
 }
 
 @Composable
-private fun CardHeader(color: Color, cardName: String, label: String, subtitle: String, mainValue: String, secondLabel: String? = null, secondValue: String? = null, typicalValue: String? = null) {
+internal fun CardHeader(color: Color, cardName: String, label: String, subtitle: String, mainValue: String, secondLabel: String? = null, secondValue: String? = null, typicalValue: String? = null) {
     Column(Modifier.fillMaxWidth().background(color).padding(horizontal = 16.dp, vertical = 12.dp)) {
         Text(cardName, color = Color.White, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         if (label.isNotEmpty()) {
@@ -219,6 +222,27 @@ private fun ActivityCard(st: ActivityUiState, range: HealthTimeRange, imperial: 
                 "${prefix}Calories" to "${st.totalCaloriesKcal}",
                 "${prefix}Active" to "${st.totalActiveMinutes / 60}:${(st.totalActiveMinutes % 60).toString().padStart(2, '0')}",
             )
+        }
+    }
+}
+
+@Composable
+private fun WorkoutsRow(onClick: () -> Unit) {
+    Surface(onClick = onClick, shape = CardShape, color = ActivityHeaderColor, shadowElevation = 2.dp) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(Icons.AutoMirrored.Filled.DirectionsRun, contentDescription = null, tint = Color.White)
+            Spacer(Modifier.width(12.dp))
+            Text(
+                "Workouts",
+                color = Color.White,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.weight(1f),
+            )
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = Color.White.copy(alpha = 0.6f))
         }
     }
 }
@@ -337,7 +361,7 @@ private fun HeartRateCard(st: HeartRateUiState, range: HealthTimeRange) {
 }
 
 @Composable
-private fun ChartPlaceholder(title: String, subtitle: String = "Wear your watch to start tracking") {
+internal fun ChartPlaceholder(title: String, subtitle: String = "Wear your watch to start tracking") {
     Column(Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(title, color = Color.White, style = MaterialTheme.typography.titleSmall)
         Spacer(Modifier.height(4.dp))
@@ -362,13 +386,13 @@ private fun StatItem(label: String, value: String) {
 }
 
 @Composable
-private fun StatsRow(bg: Color, vararg stats: Pair<String, String>) {
+internal fun StatsRow(bg: Color, vararg stats: Pair<String, String>) {
     Row(Modifier.fillMaxWidth().background(bg).padding(horizontal = 16.dp, vertical = 8.dp), Arrangement.SpaceEvenly) {
         for ((l, v) in stats) StatItem(l, v)
     }
 }
 
-private fun formatDistance(m: Long, imperial: Boolean): String {
+internal fun formatDistance(m: Long, imperial: Boolean): String {
     return if (imperial) {
         val mi = m * 0.000621371; if (mi >= 1) "${(mi * 10).roundToInt() / 10.0} mi" else "${(m * 3.28084).roundToInt()} ft"
     } else { if (m >= 1000) "${(m / 100).toInt() / 10.0} km" else "$m m" }

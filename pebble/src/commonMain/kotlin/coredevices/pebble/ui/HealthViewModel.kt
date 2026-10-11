@@ -450,7 +450,7 @@ internal fun buildDailySleepSegments(dayStart: Long, dailySleep: DailySleep?): L
         intervals.filter { it.isDeep }.mapNotNull { toSegment(it.start, it.end, true) }
 }
 
-private fun formatTimeOfDay(epochSec: Long, tz: TimeZone): String {
+internal fun formatTimeOfDay(epochSec: Long, tz: TimeZone): String {
     val dt = Instant.fromEpochSeconds(epochSec).toLocalDateTime(tz)
     val h = dt.hour; val m = dt.minute
     val ampm = if (h < 12) "AM" else "PM"

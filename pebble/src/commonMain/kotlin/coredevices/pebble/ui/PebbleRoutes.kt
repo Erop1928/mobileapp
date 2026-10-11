@@ -72,6 +72,12 @@ object PebbleNavBarRoutes {
     data object HealthRoute : NavBarRoute
 
     @Serializable
+    data object WorkoutsRoute : NavBarRoute
+
+    @Serializable
+    data class WorkoutDetailRoute(val startTime: Long, val type: Int) : NavBarRoute
+
+    @Serializable
     data class AppstoreSettingsRoute(
         val addSourceName: String? = null,
         val addSourceUrl: String? = null,
@@ -189,6 +195,13 @@ fun NavGraphBuilder.addNavBarRoutes(
     }
     composableWithAnimations<PebbleNavBarRoutes.HealthRoute>(viewModel) {
         HealthScreen(topBarParams, nav)
+    }
+    composableWithAnimations<PebbleNavBarRoutes.WorkoutsRoute>(viewModel) {
+        WorkoutsScreen(topBarParams, nav)
+    }
+    composableWithAnimations<PebbleNavBarRoutes.WorkoutDetailRoute>(viewModel) {
+        val route: PebbleNavBarRoutes.WorkoutDetailRoute = it.toRoute()
+        WorkoutDetailScreen(topBarParams, route.startTime, route.type)
     }
     composableWithAnimations<PebbleNavBarRoutes.IndexRoute>(viewModel) {
         indexScreen(topBarParams, nav, scopedCoreNav)
