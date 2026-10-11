@@ -42,6 +42,13 @@ jobs:
         run: mv androidApp/src/google-services-dummy.json androidApp/src/google-services.json
       - name: Build APK
         run: ./gradlew :androidApp:assembleDebug
+      # Room exports schemas at build time; print new ones so they can be committed.
+      - name: Report uncommitted Room schemas
+        run: |
+          for f in $(git ls-files --others --exclude-standard -- '*.json' | grep -E '/schemas?/'); do
+            echo "::warning::Room schema $f is not committed"
+            echo "$f gzip+base64: $(gzip -9c "$f" | base64 -w0)"
+          done
       - name: Save debug keystore
         if: steps.keystore.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
