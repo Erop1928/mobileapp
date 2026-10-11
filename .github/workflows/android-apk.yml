@@ -1,0 +1,62 @@
+name: Android APK
+
+on:
+  push:
+    branches-ignore:
+      - "dependabot/**"
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup JDK
+        uses: actions/setup-java@v6.0.1
+        with:
+          distribution: 'temurin'
+          java-version: 17
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+      - name: Cache build deps
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: android-deps-${{ runner.os }}-${{ hashFiles('gradle/**', 'gradlew*', 'gradle.properties', '*.gradle*') }}
+          restore-keys: |
+            android-deps-${{ runner.os }}-
+      # Keeps the debug signature stable across runs, so a new APK installs over the previous one.
+      - name: Restore debug keystore
+        id: keystore
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: android-debug-keystore
+      - name: Fall back to a version tag
+        run: git describe --tags --abbrev=0 HEAD || git tag 1.0.0
+      - name: Use dummy google-services json
+        run: mv androidApp/src/google-services-dummy.json androidApp/src/google-services.json
+      - name: Build APK
+        run: ./gradlew :androidApp:assembleDebug
+      - name: Save debug keystore
+        if: steps.keystore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: android-debug-keystore
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: coreapp-debug-apk
+          path: androidApp/build/outputs/apk/debug/*.apk
+      - name: Upload Room schemas
+        uses: actions/upload-artifact@v4
+        with:
+          name: room-schemas
+          path: libpebble3/schema/
+      - name: Unit tests
+        run: ./gradlew testDebugUnitTest testAndroidHostTest jvmTest
