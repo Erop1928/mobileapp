@@ -42,6 +42,8 @@ private const val RECORD_HEADER_SIZE = 2
  */
 fun parseHeartRateLogData(payload: ByteArray, itemSize: UShort): List<HeartRateSampleEntity> {
     val size = itemSize.toInt()
+    // TEMP DEBUG: verifying the real tag-85 payload format on-device. Remove before the upstream PR.
+    logger.i { "HR_LOG: payload=${payload.size}B itemSize=$size head=${payload.toHexPreview(48)}" }
     if (payload.isEmpty() || size <= RECORD_HEADER_SIZE) {
         logger.w { "Cannot parse protobuf log data: empty payload or item size $itemSize" }
         return emptyList()
@@ -55,21 +57,31 @@ fun parseHeartRateLogData(payload: ByteArray, itemSize: UShort): List<HeartRateS
             logger.w { "Skipping protobuf log record with invalid size $msgSize (itemSize=$itemSize)" }
         } else {
             val msgStart = offset + RECORD_HEADER_SIZE
+            val recordBytes = payload.copyOfRange(msgStart, msgStart + msgSize)
             try {
-                val decoded = ProtoBuf.decodeFromByteArray<PipelinePayload>(
-                    payload.copyOfRange(msgStart, msgStart + msgSize)
-                )
-                decoded.measurementSets.forEach { samples += it.heartRateSamples() }
+                val decoded = ProtoBuf.decodeFromByteArray<PipelinePayload>(recordBytes)
+                val recordSamples = decoded.measurementSets.flatMap { it.heartRateSamples() }
+                samples += recordSamples
+                logger.i {
+                    "HR_LOG: record msgSize=$msgSize sets=${decoded.measurementSets.size} " +
+                        "samples=${recordSamples.size} types=${decoded.measurementSets.map { it.types }}" +
+                        if (recordSamples.isEmpty()) " bytes=${recordBytes.toHexPreview(48)}" else ""
+                }
             } catch (e: SerializationException) {
-                logger.w(e) { "Failed to decode protobuf log record" }
+                logger.w(e) { "HR_LOG: decode failed msgSize=$msgSize bytes=${recordBytes.toHexPreview(48)}" }
             } catch (e: IllegalArgumentException) {
-                logger.w(e) { "Failed to decode protobuf log record" }
+                logger.w(e) { "HR_LOG: decode failed msgSize=$msgSize bytes=${recordBytes.toHexPreview(48)}" }
             }
         }
         offset += size
     }
+    logger.i { "HR_LOG: total samples=${samples.size}" }
     return samples
 }
+
+// TEMP DEBUG helper; remove with the HR_LOG lines before the upstream PR.
+private fun ByteArray.toHexPreview(max: Int): String =
+    take(max).joinToString(" ") { (it.toInt() and 0xFF).toString(16).padStart(2, '0') }
 
 private fun PipelineMeasurementSet.heartRateSamples(): List<HeartRateSampleEntity> {
     val bpmIndex = types.indexOf(MEASUREMENT_TYPE_BPM)
