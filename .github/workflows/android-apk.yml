@@ -9,6 +9,8 @@ on:
 jobs:
   apk:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Setup JDK
         uses: actions/setup-java@v6.0.1
@@ -36,8 +38,15 @@ jobs:
         with:
           path: ~/.android/debug.keystore
           key: android-debug-keystore
-      - name: Fall back to a version tag
-        run: git describe --tags --abbrev=0 HEAD || git tag 1.0.0
+      # versionName/versionCode come from the latest tag, so each build gets its own: 1.<n/1000>.<n%1000>.
+      - name: Tag build version
+        run: |
+          n=${{ github.run_number }}
+          tag="1.$((n / 1000)).$((n % 1000))"
+          echo "BUILD_TAG=$tag" >> "$GITHUB_ENV"
+          git rev-parse -q --verify "refs/tags/$tag" >/dev/null ||
+            git -c user.name=github-actions -c user.email=github-actions@users.noreply.github.com \
+              tag -a "$tag" -m "Build $tag"
       - name: Use dummy google-services json
         run: mv androidApp/src/google-services-dummy.json androidApp/src/google-services.json
       - name: Build APK
@@ -60,6 +69,19 @@ jobs:
           path: libpebble3/schema/
       - name: Unit tests
         run: ./gradlew testDebugUnitTest testAndroidHostTest jvmTest
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$BUILD_TAG" >/dev/null 2>&1; then
+            echo "Release $BUILD_TAG already exists"
+            exit 0
+          fi
+          git push origin "refs/tags/$BUILD_TAG"
+          cp androidApp/build/outputs/apk/debug/androidApp-debug.apk coreapp-debug.apk
+          gh release create "$BUILD_TAG" coreapp-debug.apk --verify-tag \
+            --title "Build $BUILD_TAG ($GITHUB_REF_NAME)" \
+            --notes "$(git log -1 --format=%s) ($GITHUB_REF_NAME @ ${GITHUB_SHA::7})"
       # Room exports schemas while generating code; print new ones so they can be committed.
       - name: Report uncommitted Room schemas
         run: |
