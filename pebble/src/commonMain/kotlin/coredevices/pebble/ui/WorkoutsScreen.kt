@@ -205,7 +205,9 @@ private fun WorkoutDetail(summary: WorkoutSummary, imperial: Boolean) {
                     secondValue = summary.maxHr?.toString() ?: "--",
                 )
                 WorkoutHrChart(summary, scrub, tm, Modifier.weight(1f))
-                if (summary.zoneMinutes.isNotEmpty()) HRZoneBar(summary.zoneMinutes)
+                // The watch leaves readings in zone 0 when HR zones aren't configured; only
+                // show the zone bar when there's time in an actual zone (1-3).
+                if (summary.zoneMinutes.any { it.key in 1..3 && it.value > 0 }) HRZoneBar(summary.zoneMinutes)
             }
         }
     }
